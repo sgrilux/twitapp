@@ -1,0 +1,13 @@
+name: Test and lint
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: Run linting on code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: linting
+        run: make lint
