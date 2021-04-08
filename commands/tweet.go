@@ -2,12 +2,13 @@ package commands
 
 import (
 	"github.com/sgrilux/twitapp/pkg/apiclient"
+	"github.com/sgrilux/twitapp/twitapp"
 )
 
 type TweetCommand struct{}
 
 func (command *TweetCommand) Execute(args []string) error {
-	creds := apiclient.Credentials{
+	creds := twitapp.Credentials{
 		ConsumerKey:    TwitApp.ConsumerKey,
 		ConsumerSecret: TwitApp.ConsumerSecret,
 		AccessToken:    TwitApp.AccessToken,

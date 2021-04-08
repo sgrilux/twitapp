@@ -11,6 +11,8 @@ type TwitAppCommand struct {
 	Tweet        TweetCommand         `command:"tweet" description:"Tweet a message"`
 	ListFollower ListFollowerCommands `command:"list-follower" description:"Show a list of users following the specified user. If none is given it will show the list of followers of the current user"`
 
+	Stats StatsCommand `command:"stats" description:"Show account statistics"`
+
 	Version func() `short:"v" long:"version" description:"Print the version of Fly and exit"`
 }
 

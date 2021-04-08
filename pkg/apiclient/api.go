@@ -6,6 +6,7 @@ import (
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/sgrilux/twitapp/twitapp"
 )
 
 type TwitterClient struct {
@@ -13,14 +14,7 @@ type TwitterClient struct {
 	user    twitter.User
 }
 
-type Credentials struct {
-	ConsumerKey    string
-	ConsumerSecret string
-	AccessToken    string
-	AccessSecret   string
-}
-
-func NewTwitterClient(creds Credentials) (*TwitterClient, error) {
+func NewTwitterClient(creds twitapp.Credentials) (*TwitterClient, error) {
 
 	config := oauth1.NewConfig(creds.ConsumerKey, creds.ConsumerSecret)
 	token := oauth1.NewToken(creds.AccessToken, creds.AccessSecret)
@@ -57,13 +51,51 @@ func (client *TwitterClient) Tweet(msg string) (*twitter.Tweet, *http.Response, 
 	return client.twitter.Statuses.Update(msg, nil)
 }
 
-func (client *TwitterClient) GetFollowerList(params twitter.FollowerListParams) (*twitter.Followers, *http.Response, error) {
-	return client.twitter.Followers.List(&params)
+func (client *TwitterClient) GetFollowerList(user *twitter.User) (followerList twitapp.FollowerList, err error) {
+	var cursor int64
+
+	cursor = -1
+	for {
+		followers, _, err := client.twitter.Followers.List(getFollowerListParams(user, cursor))
+		if err != nil {
+			return nil, err
+		}
+
+		followerList = append(followerList, followers.Users...)
+
+		cursor = followers.NextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return followerList, nil
+}
+
+func (client *TwitterClient) GetFollowingList(user *twitter.User) (followingList twitapp.FollowingList, err error) {
+	var cursor int64
+
+	cursor = -1
+	for {
+		followers, _, err := client.twitter.Friends.List(getFriendListParams(user, cursor))
+		if err != nil {
+			return nil, err
+		}
+
+		followingList = append(followingList, followers.Users...)
+
+		cursor = followers.NextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return followingList, nil
 }
 
 func (client *TwitterClient) GetUser(user string) (*twitter.User, error) {
 	if user == "" {
-		return client.getAccount(), nil
+		return &client.user, nil
 	}
 
 	params := twitter.UserShowParams{
@@ -78,8 +110,8 @@ func (client *TwitterClient) GetUser(user string) (*twitter.User, error) {
 	return twitterUser, nil
 }
 
-func (client *TwitterClient) GetFollowerListParams(user *twitter.User, cursor int64) twitter.FollowerListParams {
-	return twitter.FollowerListParams{
+func getFollowerListParams(user *twitter.User, cursor int64) *twitter.FollowerListParams {
+	return &twitter.FollowerListParams{
 		UserID:     user.ID,
 		ScreenName: user.ScreenName,
 		Cursor:     cursor,
@@ -87,6 +119,11 @@ func (client *TwitterClient) GetFollowerListParams(user *twitter.User, cursor in
 	}
 }
 
-func (client *TwitterClient) getAccount() *twitter.User {
-	return &client.user
+func getFriendListParams(user *twitter.User, cursor int64) *twitter.FriendListParams {
+	return &twitter.FriendListParams{
+		UserID:     user.ID,
+		ScreenName: user.ScreenName,
+		Cursor:     cursor,
+		Count:      200,
+	}
 }

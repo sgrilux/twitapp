@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/sgrilux/twitapp/pkg/apiclient"
+	"github.com/sgrilux/twitapp/twitapp"
 )
 
 type ListFollowerCommands struct {
@@ -13,7 +14,7 @@ type ListFollowerCommands struct {
 }
 
 func (command *ListFollowerCommands) Execute(args []string) error {
-	creds := apiclient.Credentials{
+	creds := twitapp.Credentials{
 		ConsumerKey:    TwitApp.ConsumerKey,
 		ConsumerSecret: TwitApp.ConsumerSecret,
 		AccessToken:    TwitApp.AccessToken,
@@ -44,28 +45,18 @@ func (command *ListFollowerCommands) Execute(args []string) error {
 
 		defer output.Close()
 	}
-	// Print followers
-	var cursor int64
 
-	cursor = -1
-	for {
-		followers, _, err := client.GetFollowerList(client.GetFollowerListParams(user, cursor))
-		if err != nil {
+	followerList, err := client.GetFollowerList(user)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range followerList {
+		if err := printUser(output, f.ScreenName); err != nil {
 			return err
 		}
-
-		for _, f := range followers.Users {
-			if err := printUser(output, f.ScreenName); err != nil {
-				return err
-			}
-		}
-
-		cursor = followers.NextCursor
-		if cursor == 0 {
-			break
-		}
-		// time.Sleep(1 * time.Second)
 	}
+
 	return nil
 }
 
